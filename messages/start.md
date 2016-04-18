@@ -1,0 +1,1 @@
+To auth on your Jenkins server type: /auth \[server_url] \[login] \[token]
