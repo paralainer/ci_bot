@@ -70,6 +70,14 @@ function routeMessage(message, callback) {
             start(message, callback);
             break;
 
+        case '/jobs':
+            jobs(message, callback);
+            break;
+
+        case '/views':
+            views(message, callback);
+            break;
+
         default:
             callback('Unknown command: ' + command);
     }
@@ -89,9 +97,54 @@ function getBotCommand(message) {
     return command;
 }
 
+function jobs(message, callback) {
+    var view = message.text.split(' ')[1];
+    var pathPrefix = '';
+    if (view) {
+        pathPrefix = '/view/' + view;
+    }
+    authenticate(message, function (credentials, err) {
+        if (err) {
+            callback(err);
+        }
+
+        jenkinsClient.callApi(credentials, pathPrefix + '/api/json', {tree: 'jobs[name]'}, function (data, err) {
+            if (err) {
+                console.log(err);
+                callback('Command failed.');
+            } else {
+                var jobsNames = data.jobs.map((el) => ' * ' + el.name);
+                var viewText = '';
+                if (view) {
+                    viewText = ' for view \'' + view + '\'';
+                }
+                callback('Jobs list' + viewText + ':\n' + jobsNames.join('\n'));
+            }
+        });
+    });
+}
+
+function views(message, callback) {
+    authenticate(message, function (credentials, err) {
+        if (err) {
+            callback(err);
+        }
+
+        jenkinsClient.callApi(credentials, '/api/json', {tree: 'views[name]'}, function (data, err) {
+            if (err) {
+                console.log(err);
+                callback('Command failed.');
+            } else {
+                var viewsNames = data.views.map((el) => ' * ' + el.name);
+                callback('Views list:\n' + viewsNames.join('\n'));
+            }
+        });
+    });
+}
+
 
 function start(message, callback) {
-    fs.readFile('./messages/start.html', 'utf8', function (err,data) {
+    fs.readFile('./messages/start.html', 'utf8', function (err, data) {
         if (err) {
             callback('Hi!');
             return console.log(err);
@@ -132,10 +185,9 @@ function processAuth(message, callback) {
 }
 
 function runJob(message, callback) {
-    getUserStore().find(TELEGRAM, message.from.id, function (credentials) {
-        if (!credentials) {
-            callback('Please run /auth command first.');
-            return;
+    authenticate(message, function (credentials, err) {
+        if (err) {
+            callback(err);
         }
 
         var jobName = message.text.split(' ')[1];
@@ -153,5 +205,16 @@ function runJob(message, callback) {
             }
         });
     });
+}
 
+
+function authenticate(message, callback) {
+    getUserStore().find(TELEGRAM, message.from.id, function (credentials) {
+        if (!credentials) {
+            callback(null, 'Please run /auth command first.');
+            return;
+        }
+
+        callback(credentials);
+    });
 }
