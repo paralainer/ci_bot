@@ -1,8 +1,10 @@
-var userStore = {};
-
 var UpdatesFetcher = require('./updatesFetcher');
 var telegramClient = require('./telegramClient');
 var jenkinsClient = require('../jenkins/jenkinsClient');
+
+var getUserStore = require('../users/UserStore').get;
+
+var TELEGRAM = 'telegram';
 
 module.exports.start = function () {
     console.log('Starting telegram bot server...');
@@ -95,36 +97,38 @@ function processAuth(message, callback) {
                 return;
             }
 
-            userStore[message.from.id] = credentials;
+            getUserStore().save(TELEGRAM, Object.assign({id: message.from.id}, credentials), function(){
+                var jobNames = data.jobs.map(function (job) {
+                    return ' * ' + job.name;
+                }).join('\n');
 
-            var jobNames = data.jobs.map(function (job) {
-                return '   * ' + job.name;
-            }).join('\n');
-
-            callback('Auth success. Available jobs: \n' + jobNames);
+                callback('Auth success. Available jobs: \n' + jobNames);
+            });
         }
     );
 }
 
 function runJob(message, callback) {
-    var credentials = userStore[message.from.id];
-    if (!credentials) {
-        callback('Please run /auth command first.');
-        return;
-    }
-
-    var jobName = message.text.split(' ')[1];
-
-    if (!jobName) {
-        callback('Usage: /run [build_name]');
-        return;
-    }
-
-    jenkinsClient.runJob(credentials, jobName, function (err) {
-        if (!err) {
-            callback('Job \'' + jobName + '\' started');
-        } else {
-            callback('Job \'' + jobName + '\' not found');
+    getUserStore().find(TELEGRAM, message.from.id, function (credentials) {
+        if (!credentials) {
+            callback('Please run /auth command first.');
+            return;
         }
+
+        var jobName = message.text.split(' ')[1];
+
+        if (!jobName) {
+            callback('Usage: /run [build_name]');
+            return;
+        }
+
+        jenkinsClient.runJob(credentials, jobName, function (err) {
+            if (!err) {
+                callback('Job \'' + jobName + '\' started');
+            } else {
+                callback('Job \'' + jobName + '\' not found');
+            }
+        });
     });
+
 }

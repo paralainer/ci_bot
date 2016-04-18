@@ -14,7 +14,6 @@ UpdatesFetcher.prototype.fetchUpdate = function () {
     var me = this;
     client.method('getUpdates', {offset: this.updateId + 1, timeout: 30},
         function (data) {
-            console.log('Update arrived');
             if (data.ok) {
                 me.onUpdate(data, function (lastUpdateId) {
                     me.updateId = lastUpdateId;
