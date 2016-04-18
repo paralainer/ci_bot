@@ -1,6 +1,7 @@
 var UpdatesFetcher = require('./updatesFetcher');
 var telegramClient = require('./telegramClient');
 var jenkinsClient = require('../jenkins/jenkinsClient');
+var fs = require('fs');
 
 var getUserStore = require('../users/UserStore').get;
 
@@ -14,7 +15,7 @@ module.exports.start = function () {
     console.log('Telegram bot server started.');
 };
 
-function onError(data){
+function onError(data) {
     console.log('Error: ' + data);
 }
 
@@ -26,12 +27,13 @@ function onUpdate(data, tellLastUpdateId) {
         }
         processChatCommand(el.message);
     });
+
     tellLastUpdateId(updateId);
 }
 
 function processChatCommand(message) {
+    console.log('Got message: \'' + message.text + '\' from user: ' + message.from.id + '(' + message.from.username + ')');
     routeMessage(message, function (result) {
-
         if (typeof result === 'string') {
             result = {text: result};
         }
@@ -57,12 +59,22 @@ function routeMessage(message, callback) {
     }
     switch (command) {
         case '/auth':
-            return processAuth(message, callback);
+            processAuth(message, callback);
+            break;
+
         case '/run':
-            return runJob(message, callback);
+            runJob(message, callback);
+            break;
+
+        case '/start':
+            start(message, callback);
+            break;
+
+        default:
+            callback('Unknown command: ' + command);
     }
 
-    callback('Unknown command: ' + command);
+
 }
 
 function getBotCommand(message) {
@@ -75,6 +87,17 @@ function getBotCommand(message) {
     });
 
     return command;
+}
+
+
+function start(message, callback) {
+    fs.readFile('./messages/start.html', 'utf8', function (err,data) {
+        if (err) {
+            callback('Hi!');
+            return console.log(err);
+        }
+        callback({text: data, parse_mode: 'HTML'});
+    });
 }
 
 function processAuth(message, callback) {
@@ -97,7 +120,7 @@ function processAuth(message, callback) {
                 return;
             }
 
-            getUserStore().save(TELEGRAM, Object.assign({id: message.from.id}, credentials), function(){
+            getUserStore().save(TELEGRAM, Object.assign({id: message.from.id}, credentials), function () {
                 var jobNames = data.jobs.map(function (job) {
                     return ' * ' + job.name;
                 }).join('\n');
