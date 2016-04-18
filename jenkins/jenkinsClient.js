@@ -42,11 +42,7 @@ module.exports.callApi = function callApi(credentials, path, params, callback) {
 
 
 module.exports.runJob = function (credentials, jobName, callback) {
-    var httpClient = new Client({
-        user: credentials.username,
-        password: credentials.token
-    });
-    httpClient.post(credentials.url + '/job/' + jobName + '/build?token=TOKEN', {headers: buildAuthHeader(credentials)}, function (data, response) {
+    client.post(credentials.url + '/job/' + jobName + '/build?token=TOKEN', {headers: buildAuthHeader(credentials)}, function (data, response) {
         if (response.statusCode >= 200 && response.statusCode < 300) {
             callback();
         } else {
