@@ -11,7 +11,15 @@ UserStore.prototype.save = function (prefix, credentials, callback) {
 
 UserStore.prototype.find = function (prefix, id, callback) {
     var collection = this.db.collection(prefix + '_users');
-    collection.findOne({id: id}).then(callback);
+    collection.find({id: id}).limit(1).next(function (err, doc) {
+            if (err) {
+                console.log(err);
+                callback(null);
+            } else {
+                callback(doc)
+            }
+        }
+    );
 };
 
 var userStore = null;
