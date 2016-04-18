@@ -7,10 +7,14 @@ var jenkinsClient = require('../jenkins/jenkinsClient');
 module.exports.start = function () {
     console.log('Starting telegram bot server...');
 
-    new UpdatesFetcher(onUpdate).start();
+    new UpdatesFetcher(onUpdate, onError).start();
 
     console.log('Telegram bot server started.');
 };
+
+function onError(data){
+    console.log('Error: ' + data);
+}
 
 function onUpdate(data, tellLastUpdateId) {
     var updateId = 0;

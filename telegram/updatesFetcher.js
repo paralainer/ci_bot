@@ -7,20 +7,22 @@ var UpdatesFetcher = function (onUpdate, onError) {
 };
 
 UpdatesFetcher.prototype.start = function () {
-    setTimeout(this.fetchUpdate.bind(this), 1000);
+    this.fetchUpdate();
 };
 
 UpdatesFetcher.prototype.fetchUpdate = function () {
     var me = this;
-    client.method('getUpdates', {offset: this.updateId + 1},
+    client.method('getUpdates', {offset: this.updateId + 1, timeout: 30},
         function (data) {
+            console.log('Update arrived');
             if (data.ok) {
                 me.onUpdate(data, function (lastUpdateId) {
                     me.updateId = lastUpdateId;
-                    setTimeout(me.fetchUpdate.bind(me));
+                    me.fetchUpdate();
                 });
             } else {
                 me.onError && me.onError(data);
+                me.fetchUpdate();
             }
 
         }
