@@ -1,18 +1,17 @@
 var Client = new require('node-rest-client').Client;
+var client = new Client({
+    mimetypes: {
+        json: ["application/json", "application/json;charset=utf-8"]
+    }
+});
 
-function buildClient(credentials) {
-    return new Client({
-        user: credentials.username,
-        password: credentials.token,
-        mimetypes: {
-            json: ["application/json", "application/json;charset=utf-8"]
-        }
-    });
+function buildAuthHeader(credentials) {
+    return {"Authorization": "Basic " + new Buffer([credentials.username, credentials.token].join(":")).toString("base64")}
 }
 
+
 module.exports.checkCredentials = function (credentials, callback) {
-    var httpClient = buildClient(credentials);
-    httpClient.get(credentials.url + '/api/json', function (data) {
+    callApi(credentials, '/api/json', function (data) {
         if (data.jobs) {
             callback(data);
         } else {
@@ -21,16 +20,16 @@ module.exports.checkCredentials = function (credentials, callback) {
     });
 };
 
-module.exports.callApi = function (credentials, path, params, callback) {
+module.exports.callApi = function callApi(credentials, path, params, callback) {
     if (!callback) {
         callback = params;
         params = null;
     }
 
-    buildClient(credentials).post(credentials.url + path,
+    client.post(credentials.url + path,
         {
             data: params || {},
-            headers: {"Content-Type": "application/x-www-form-urlencoded"}
+            headers: Object.assign({"Content-Type": "application/x-www-form-urlencoded"}, buildAuthHeader(credentials))
         },
         function (data, response) {
             if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -47,7 +46,7 @@ module.exports.runJob = function (credentials, jobName, callback) {
         user: credentials.username,
         password: credentials.token
     });
-    httpClient.post(credentials.url + '/job/' + jobName + '/build?token=TOKEN', {}, function (data, response) {
+    httpClient.post(credentials.url + '/job/' + jobName + '/build?token=TOKEN', {headers: buildAuthHeader(credentials)}, function (data, response) {
         if (response.statusCode >= 200 && response.statusCode < 300) {
             callback();
         } else {

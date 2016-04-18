@@ -1,6 +1,7 @@
 var UpdatesFetcher = require('./updatesFetcher');
 var telegramClient = require('./telegramClient');
 var jenkinsClient = require('../jenkins/jenkinsClient');
+var jenkinsSubscriptionService = require('../jenkins/subscriptionService');
 var fs = require('fs');
 
 var getUserStore = require('../users/UserStore').get;
@@ -34,21 +35,25 @@ function onUpdate(data, tellLastUpdateId) {
 function processChatCommand(message) {
     console.log('Got message: \'' + message.text + '\' from user: ' + message.from.id + '(' + message.from.username + ')');
     routeMessage(message, function (result) {
-        if (typeof result === 'string') {
-            result = {text: result};
-        }
-
-        telegramClient.method('sendMessage',
-            Object.assign({chat_id: message.chat.id}, result),
-            function (data) {
-                if (data.ok) {
-                    console.log('Sent message: ' + result.text + ' to chat: ' + message.chat.id);
-                } else {
-                    console.error(data);
-                }
-            }
-        );
+        sendMessage(message.chat.id, result);
     });
+}
+
+function sendMessage(chatId, params) {
+    if (typeof params === 'string') {
+        params = {text: params};
+    }
+
+    telegramClient.method('sendMessage',
+        Object.assign({chat_id: chatId}, params),
+        function (data) {
+            if (data.ok) {
+                console.log('Sent message: ' + params.text + ' to chat: ' + chatId);
+            } else {
+                console.error(data);
+            }
+        }
+    );
 }
 
 function routeMessage(message, callback) {
@@ -82,6 +87,10 @@ function routeMessage(message, callback) {
             subscribe(message, callback);
             break;
 
+        case '/unsubscribe':
+            unsubscribe(message, callback);
+            break;
+
         default:
             callback('Unknown command: ' + command);
     }
@@ -92,64 +101,33 @@ function subscribe(message, callback) {
         if (err) {
             callback(err);
         }
+        var subscription = jenkinsSubscriptionService.getSubscription(credentials);
 
-        var maxTimestamp = null;
-
-        function notifyNewBuilds() {
-            getNewBuilds(credentials, maxTimestamp, function (newBuilds, timestamp) {
-                maxTimestamp = timestamp;
+        function listenSubscription(subscription, chatId) {
+            subscription.addListener(chatId, function (newBuilds) {
                 newBuilds.forEach(function (build) {
-                    callback(
-                        {
-                            text: 'Build finished. Job: ' + build.job + ', number: ' + build.number + ', status: ' + build.result + '\nURL: ' + build.url,
-                            disable_web_page_preview: true
-                        });
+                    sendMessage(chatId, {
+                        text: 'Build finished. Job: ' + build.job + ', number: ' + build.number + ', status: ' + build.result + '\nURL: ' + build.url,
+                        disable_web_page_preview: true
+                    });
                 });
-                setTimeout(notifyNewBuilds, 5000);
             });
+
         }
 
-        getNewBuilds(credentials, 0, function (builds, timestamp) {
-            maxTimestamp = timestamp;
-            setTimeout(notifyNewBuilds, 5000);
-
-            callback('Subscribed to new finished builds.')
-        });
-
-
+        listenSubscription(subscription, message.chat.id);
     });
-
 }
 
-
-function getNewBuilds(credentials, timestamp, callback) {
-    var maxTimestamp = timestamp;
-    jenkinsClient.callApi(credentials, '/api/json?tree=jobs[name,builds[number,url,timestamp,building,result]]', function (data, err) {
+function unsubscribe(message, callback) {
+    authenticate(message, function (credentials, err) {
         if (err) {
-            console.log(err);
-        } else {
-            var newBuilds = [];
-            data.jobs.forEach(function (job) {
-                job.builds && job.builds.forEach(function (build) {
-                    if (!build.building && build.timestamp > timestamp) {
-                        newBuilds.push({
-                            job: job.name,
-                            number: build.number,
-                            result: build.result,
-                            url: build.url
-                        });
-                    }
-                    if (!build.building && build.timestamp > maxTimestamp) {
-                        maxTimestamp = build.timestamp;
-                    }
-                });
-            });
-
-            callback(newBuilds, maxTimestamp);
+            callback(err);
         }
+        var subscription = jenkinsSubscriptionService.getSubscription(credentials);
+        subscription.removeListener(message.chat.id);
     });
 }
-
 
 function getBotCommand(message) {
     var command = null;
