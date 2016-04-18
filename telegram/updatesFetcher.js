@@ -7,7 +7,6 @@ var UpdatesFetcher = function (onUpdate, onError) {
 };
 
 UpdatesFetcher.prototype.start = function () {
-    var me = this;
     setTimeout(this.fetchUpdate.bind(this), 1000);
 };
 
