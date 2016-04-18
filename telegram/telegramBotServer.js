@@ -78,12 +78,78 @@ function routeMessage(message, callback) {
             views(message, callback);
             break;
 
+        case '/subscribe':
+            subscribe(message, callback);
+            break;
+
         default:
             callback('Unknown command: ' + command);
     }
+}
 
+function subscribe(message, callback) {
+    authenticate(message, function (credentials, err) {
+        if (err) {
+            callback(err);
+        }
+
+        var maxTimestamp = null;
+
+        function notifyNewBuilds() {
+            getNewBuilds(credentials, maxTimestamp, function (newBuilds, timestamp) {
+                maxTimestamp = timestamp;
+                newBuilds.forEach(function (build) {
+                    callback(
+                        {
+                            text: 'Build finished. Job: ' + build.job + ', number: ' + build.number + ', status: ' + build.result + '\nURL: ' + build.url,
+                            disable_web_page_preview: true
+                        });
+                });
+                setTimeout(notifyNewBuilds, 5000);
+            });
+        }
+
+        getNewBuilds(credentials, 0, function (builds, timestamp) {
+            maxTimestamp = timestamp;
+            setTimeout(notifyNewBuilds, 5000);
+
+            callback('Subscribed to new finished builds.')
+        });
+
+
+    });
 
 }
+
+
+function getNewBuilds(credentials, timestamp, callback) {
+    var maxTimestamp = timestamp;
+    jenkinsClient.callApi(credentials, '/api/json?tree=jobs[name,builds[number,url,timestamp,building,result]]', function (data, err) {
+        if (err) {
+            console.log(err);
+        } else {
+            var newBuilds = [];
+            data.jobs.forEach(function (job) {
+                job.builds && job.builds.forEach(function (build) {
+                    if (!build.building && build.timestamp > timestamp) {
+                        newBuilds.push({
+                            job: job.name,
+                            number: build.number,
+                            result: build.result,
+                            url: build.url
+                        });
+                    }
+                    if (!build.building && build.timestamp > maxTimestamp) {
+                        maxTimestamp = build.timestamp;
+                    }
+                });
+            });
+
+            callback(newBuilds, maxTimestamp);
+        }
+    });
+}
+
 
 function getBotCommand(message) {
     var command = null;

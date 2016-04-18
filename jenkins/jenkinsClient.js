@@ -1,6 +1,5 @@
 var Client = new require('node-rest-client').Client;
 
-
 function buildClient(credentials) {
     return new Client({
         user: credentials.username,
@@ -23,18 +22,23 @@ module.exports.checkCredentials = function (credentials, callback) {
 };
 
 module.exports.callApi = function (credentials, path, params, callback) {
-    if (!callback){
+    if (!callback) {
         callback = params;
         params = null;
     }
 
-    buildClient(credentials).post(credentials.url + path, {data: params || {}}, function (data, response) {
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-            callback(data);
-        } else {
-            callback(null, 'Error calling jenkins api: ' + JSON.stringify(data));
-        }
-    })
+    buildClient(credentials).post(credentials.url + path,
+        {
+            data: params || {},
+            headers: {"Content-Type": "application/x-www-form-urlencoded"}
+        },
+        function (data, response) {
+            if (response.statusCode >= 200 && response.statusCode < 300) {
+                callback(data);
+            } else {
+                callback(null, 'Error calling jenkins api: ' + JSON.stringify(data));
+            }
+        })
 };
 
 
