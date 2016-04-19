@@ -1,6 +1,7 @@
 var UpdatesFetcher = require('./updatesFetcher');
 var telegramClient = require('./telegramClient');
 var jenkinsClient = require('../jenkins/jenkinsClient');
+var emoji = require('node-emoji').emoji;
 var jenkinsSubscriptionService = require('../jenkins/subscriptionService');
 var fs = require('fs');
 
@@ -40,20 +41,42 @@ function processChatCommand(message) {
 }
 
 function sendMessage(chatId, params) {
-    if (typeof params === 'string') {
-        params = {text: params};
+    if (params.template) {
+        renderMessage(params, doSend);
+    } else {
+        doSend(params);
     }
 
-    telegramClient.method('sendMessage',
-        Object.assign({chat_id: chatId}, params),
-        function (data) {
-            if (data.ok) {
-                console.log('Sent message: ' + params.text + ' to chat: ' + chatId);
-            } else {
-                console.error(data);
-            }
+    function doSend(params) {
+        if (typeof params === 'string') {
+            params = {text: params};
         }
-    );
+        telegramClient.method('sendMessage',
+            Object.assign({chat_id: chatId}, params),
+            function (data) {
+                if (data.ok) {
+                    console.log('Sent message: ' + params.text + ' to chat: ' + chatId);
+                } else {
+                    console.error(data);
+                }
+            }
+        );
+    }
+
+}
+
+function renderMessage(params, callback) {
+    fs.readFile(params.template, 'utf8', function (err, data) {
+        if (err) {
+            return console.log(err);
+        }
+        if (params.config) {
+            Object.keys(params.config).forEach(function (paramKey) {
+                data = data.split('$' + paramKey).join(params.config[paramKey]);
+            });
+        }
+        callback(Object.assign(params, {text: data, parse_mode: 'Markdown'}));
+    });
 }
 
 function routeMessage(message, callback) {
@@ -106,8 +129,17 @@ function subscribe(message, callback) {
         function listenSubscription(subscription, chatId) {
             subscription.addListener(chatId, function (newBuilds) {
                 newBuilds.forEach(function (build) {
+                    var pic = '';
+                    if (build.result == 'SUCCESS') {
+                        pic = emoji.sunny;
+                    } else {
+                        pic = emoji.rain_cloud;
+                    }
                     sendMessage(chatId, {
-                        text: 'Build finished. Job: ' + build.job + ', number: ' + build.number + ', status: ' + build.result + '\nURL: ' + build.url,
+                        template: './messages/build_finished.md',
+                        config: Object.assign({
+                            emoji: pic
+                        }, build),
                         disable_web_page_preview: true
                     });
                 });
@@ -188,13 +220,7 @@ function views(message, callback) {
 
 
 function start(message, callback) {
-    fs.readFile('./messages/start.html', 'utf8', function (err, data) {
-        if (err) {
-            callback('Hi!');
-            return console.log(err);
-        }
-        callback({text: data, parse_mode: 'HTML'});
-    });
+    callback({template: './messages/start.md'});
 }
 
 function processAuth(message, callback) {
@@ -202,6 +228,10 @@ function processAuth(message, callback) {
     var url = parts[1];
     var username = parts[2];
     var token = parts[3];
+
+    if (!url) {
+        return;
+    }
 
     var credentials = {
         url: url,

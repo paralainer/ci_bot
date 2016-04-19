@@ -20,7 +20,9 @@ module.exports.checkCredentials = function (credentials, callback) {
     });
 };
 
-module.exports.callApi = function callApi(credentials, path, params, callback) {
+module.exports.callApi = callApi;
+
+function callApi(credentials, path, params, callback) {
     if (!callback) {
         callback = params;
         params = null;
