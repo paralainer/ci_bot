@@ -148,6 +148,7 @@ function subscribe(message, callback) {
         }
 
         listenSubscription(subscription, message.chat.id);
+        callback('I will notify you about all new builds');
     });
 }
 
@@ -283,7 +284,7 @@ function runJob(message, callback) {
 
 
 function authenticate(message, callback) {
-    getUserStore().find(TELEGRAM, message.from.id, function (credentials) {
+    getUserStore().find(TELEGRAM, message.chat.id, function (credentials) {
         if (!credentials) {
             callback(null, 'Please run /auth command first.');
             return;
