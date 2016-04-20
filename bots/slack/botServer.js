@@ -14,7 +14,7 @@ var bot = new Bot(settings);
 module.exports.start = function() {
   bot.on('start', onStart);
   bot.on('message', onMessage);
-}
+};
 
 function onStart() {
   console.log('Slack bot has been started');

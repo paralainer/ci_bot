@@ -7,9 +7,6 @@ var debug = require('debug')('ci_bot:server');
 
 var routes = require('./routes/index');
 
-var slackBotServer = require('./slack/botServer');
-var telegramBotServer = require('./telegram/telegramBotServer');
-
 var app = express();
 
 // view engine setup
@@ -55,8 +52,5 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
-
-slackBotServer.start();
-telegramBotServer.start();
 
 module.exports = app;

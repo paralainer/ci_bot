@@ -1,6 +1,7 @@
 var client = require('./telegramClient');
 
-var UpdatesFetcher = function (onUpdate, onError) {
+var UpdatesFetcher = function (token, onUpdate, onError) {
+    this.token = token;
     this.onUpdate = onUpdate;
     this.onError = onError;
     this.updateId = 0;
@@ -12,7 +13,7 @@ UpdatesFetcher.prototype.start = function () {
 
 UpdatesFetcher.prototype.fetchUpdate = function () {
     var me = this;
-    client.method('getUpdates', {offset: this.updateId + 1, timeout: 30},
+    client.method(this.token, 'getUpdates', {offset: this.updateId + 1, timeout: 30},
         function (data) {
             if (data.ok) {
                 me.onUpdate(data, function (lastUpdateId) {

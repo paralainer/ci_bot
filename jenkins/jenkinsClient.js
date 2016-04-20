@@ -1,7 +1,7 @@
 var Client = new require('node-rest-client').Client;
 var client = new Client({
     mimetypes: {
-        json: ["application/json", "application/json;charset=utf-8"]
+        json: ["application/json", "application/json;charset=utf-8", "application/json; charset=utf-8"]
     }
 });
 
@@ -31,7 +31,7 @@ function callApi(credentials, path, params, callback) {
     client.post(credentials.url + path,
         {
             data: params || {},
-            headers: Object.assign({"Content-Type": "application/x-www-form-urlencoded"}, buildAuthHeader(credentials))
+            headers: Object.assign({"Content-Type": "application/json"}, buildAuthHeader(credentials))
         },
         function (data, response) {
             if (response.statusCode >= 200 && response.statusCode < 300) {
