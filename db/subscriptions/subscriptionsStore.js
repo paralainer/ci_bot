@@ -71,38 +71,6 @@ var SubscriptionsStore = function (db) {
 };
 
 
-SubscriptionsStore.prototype.save = function (subscription, callback) {
-    var collection = this.db.collection(collectionName);
-    collection.findOneAndDelete({id: subscription.id}).then(function () {
-        collection.insertOne(subscription).then(callback)
-    });
-};
-
-SubscriptionsStore.prototype.find = function (id, callback) {
-    var collection = this.db.collection(collectionName);
-    collection.find({id: chatId}).limit(1).next(function (err, doc) {
-            if (err) {
-                console.log(err);
-                callback(null);
-            } else {
-                callback(doc)
-            }
-        }
-    );
-};
-
-SubscriptionsStore.prototype.getAll = function (id, callback) {
-    var collection = this.db.collection(collectionName);
-    collection.find({})
-        .toArray()
-        .then(callback)
-        .catch((err) => {
-            console.log(err);
-            callback(null);
-        });
-};
-
-
 var subscriptionsStore = null;
 
 module.exports.init = function (db) {
