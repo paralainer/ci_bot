@@ -98,6 +98,8 @@ var TelegramBot = function (token) {
         message.entities && message.entities.forEach(function (entity) {
             if (entity.type === 'bot_command') {
                 command = message.text.substr(entity.offset + 1, entity.length - 1);
+                //fix for commands with bot name like /run@ci_fellow_bot
+                command = command.split('@')[0];
                 params = message.text.substr(entity.length);
                 if (params) {
                     params = params.trim();
