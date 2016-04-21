@@ -1,7 +1,7 @@
-var getUserStore = require('../../../users/UserStore').get;
+var store = require('../../../db/users/userStore').get;
 
 module.exports = function (command, message) {
-    getUserStore().find(message.bot.getName(), message.chatId, function (credentials) {
+    store().find(message.bot.getName(), message.chatId, function (credentials) {
         if (!credentials) {
             message.answer('Please run /auth command first.');
             return;

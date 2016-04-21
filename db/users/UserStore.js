@@ -22,7 +22,7 @@ UserStore.prototype.find = function (prefix, id, callback) {
     );
 };
 
-var userStore = null;
+var userStore;
 
 module.exports.init = function (db) {
     userStore = new UserStore(db);

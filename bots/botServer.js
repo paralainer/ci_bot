@@ -8,6 +8,7 @@ var fs = require('fs');
  *      subscribe(function onMessage(message)) - this method should accept callback function that accepts message object
  *                                               callback function is called each time when new message has arrived
  *      start(function onStart()) - start method should start the bot (connect to server etc.), after that it should call callback method
+ *      sendMessage(chatId, text, options)
  *  message format:
  *      Bot should return message in the following format:
  *      {
@@ -28,9 +29,9 @@ var BotServer = function (bots) {
     this.start = function () {
         this.bots.forEach((bot) => {
             var name = bot.getName();
-            
+
             bot.subscribe(this.onMessage.bind(this));
-            
+
             bot.start((err) => {
                 if (err) {
                     console.log(`Error starting bot ${name}: ` + err);
@@ -39,6 +40,21 @@ var BotServer = function (bots) {
                 console.log(`Bot '${name}' started`);
             });
         });
+    };
+
+    //public
+    this.sendMessage = function (botName, chatId, text, options) {
+        var bot = this.bots.find((bot) => bot.getName() == botName);
+        if (bot) {
+            this.handleMessage(
+                text,
+                options,
+                (text, options) => bot.sendMessage(chatId, text, options)
+            );
+        } else {
+            console.log(`Can't send message to bot ${botName}, bot not found`);
+        }
+
     };
 
     //private
@@ -51,41 +67,37 @@ var BotServer = function (bots) {
 
     //private
     this.answerProxy = function (message) {
-        var answer = message.answer;
-        message.answer = function (answerObject, options) {
-            this.handleAnswer(answerObject, answer, options);
+        var answerFunc = message.answer;
+        message.answer = function (messageText, options) {
+            this.handleMessage(messageText, options, answerFunc);
         }.bind(this);
     };
 
     //private
-    this.handleAnswer = function (answerObject, answerCallback, options) {
-        if (typeof answerObject === 'string') {
-            answerCallback(answerObject, options);
+    this.handleMessage = function (messageText, options, callback) {
+        if (typeof messageText === 'string') {
+            callback(messageText, options);
             return;
         }
 
-        if (answerObject.template) {
-            this.renderMessage(answerObject, answerCallback, options);
-            return;
-        }
-
-        if (answerObject.text) {
-            answerCallback(answerObject.text, answerObject);
+        if (messageText.template) {
+            this.renderMessage(messageText, options, callback);
         }
     };
 
+
     //private
-    this.renderMessage = function (answerObject, answerCallback, options) {
-        fs.readFile(answerObject.template, 'utf8', function (err, data) {
+    this.renderMessage = function (message, options, callback) {
+        fs.readFile(message.template, 'utf8', function (err, data) {
             if (err) {
                 return console.log(err);
             }
-            if (answerObject.config) {
-                Object.keys(answerObject.config).forEach(function (paramKey) {
-                    data = data.split('$' + paramKey).join(answerObject.config[paramKey]);
+            if (message.config) {
+                Object.keys(message.config).forEach(function (paramKey) {
+                    data = data.split('$' + paramKey).join(message.config[paramKey]);
                 });
             }
-            answerCallback(data, Object.assign(options || {}, {'parse_mode': 'Markdown'}));
+            callback(data, Object.assign(options || {}, {'parse_mode': 'Markdown'}));
         });
     }
 };

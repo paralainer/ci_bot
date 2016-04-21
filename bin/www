@@ -1,37 +1,45 @@
 #!/usr/bin/env node
 var debug = require('debug')('ci_bot:server');
 var MongoClient = require('mongodb').MongoClient;
-var userStoreInit = require('../users/UserStore').init;
+var botServer = require('../bots/botApp');
+var storesRegistry = require('../db/storesInitializer');
+var subscriptionsManager = require('../jenkins/subscriptions/subscriptionsManager');
+
 // Connection URL
 var url = 'mongodb://' + process.env.MONGO_USER + ':' + process.env.MONGO_PASS + '@ds013330.mlab.com:13330/ci_bot';
 // Use connect method to connect to the Server
 console.log('Connecting to MongoDB...');
 MongoClient.connect(url, function (err, db) {
-
-    if (err){
-        console.log('Error connecting to mongo db.'  + err);
+    if (err) {
+        console.log('Error connecting to mongo db.' + err);
         return;
     }
 
-    startWebApp(db);
-    startBots(db);
+    initializeStores(db);
+    startWebApp();
+    var botServer = startBots();
+    startSubscriptions(botServer);
 });
 
+function startSubscriptions(botServer) {
+    subscriptionsManager.start(botServer, function(){
+       console.log('All subscriptions started');
+    });
+}
+
+function initializeStores(db) {
+    storesRegistry.initStores(db);
+}
+
 function startBots() {
-    var BotServer = require('../bots/botServer');
-    var TelegramBot = require('../bots/telegram/telegramBot');
-
-    var botServer = new BotServer([
-        new TelegramBot(process.env.TELEGRAM_KEY)
-    ]);
-
     botServer.start();
+    return botServer;
 }
 
 
 function startWebApp(db) {
 
-    var app = require('../app');
+    var app = require('../web/app');
     var http = require('http');
 
     /**
@@ -42,8 +50,6 @@ function startWebApp(db) {
     app.set('port', port);
 
     console.log('Connected to MongoDB.');
-
-    userStoreInit(db);
 
     /**
      * Create HTTP server.
@@ -101,25 +107,24 @@ function startWebApp(db) {
 }
 
 
-
 /**
  * Normalize a port into a number, string, or false.
  */
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+    var port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+    if (port >= 0) {
+        // port number
+        return port;
+    }
 
-  return false;
+    return false;
 }
 
 

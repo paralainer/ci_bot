@@ -1,3 +1,3 @@
 module.exports = function(message) {
-    message.answer({template: './messages/start.md'});
+    message.answer({template: './bots/messages/start.md'});
 };

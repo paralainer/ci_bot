@@ -25,7 +25,7 @@ var TelegramBot = function (token) {
         onStarted();
     };
 
-    //private
+    //public
     this.sendMessage = (chatId, text, options) => {
         telegramClient.method(this.token, 'sendMessage',
             Object.assign({chat_id: chatId}, {text: text}, this.toTelegramOptions(options)),
