@@ -1,6 +1,8 @@
 module.exports.checkCredentials = checkCredentials;
 module.exports.callApi = callApi;
 module.exports.runJob = runJob;
+module.exports.getJobsList = getJobsList;
+
 
 var Client = new require('node-rest-client').Client;
 var client = new Client({
@@ -52,6 +54,25 @@ function runJob(credentials, jobName, callback) {
         }
     });
 }
+
+function getJobsList(credentials, view, callback){
+    var pathPrefix = '';
+    if (view && view.length > 0) {
+        pathPrefix = '/view/' + view;
+    }
+
+    callApi(credentials, pathPrefix + '/api/json', {tree: 'jobs[name]'}, function (data, err) {
+        if (err) {
+            console.log(err);
+            callback(null, err);
+        } else {
+            var jobsNames = data.jobs.map((el) => el.name);
+            callback(jobsNames);
+        }
+    });
+}
+
+
 
 
 function buildAuthHeader(credentials) {

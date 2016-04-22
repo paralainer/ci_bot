@@ -1,4 +1,4 @@
-var CommandRouter = require('./commandRouter');
+var runCommand = require('./commandRouter').runCommand;
 var fs = require('fs');
 
 /**
@@ -23,7 +23,6 @@ var fs = require('fs');
  */
 var BotServer = function (bots) {
     this.bots = bots;
-    this.commandRouter = new CommandRouter();
 
     //public
     this.start = function () {
@@ -61,7 +60,7 @@ var BotServer = function (bots) {
     this.onMessage = function (message) {
         if (message.command) {
             this.answerProxy(message);
-            this.commandRouter.runCommand(message);
+            runCommand(message);
         }
     };
 

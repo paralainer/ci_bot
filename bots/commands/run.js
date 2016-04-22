@@ -4,7 +4,11 @@ module.exports = function (message, credentials) {
     var jobName = message.params;
 
     if (!jobName) {
-        message.answer('Usage: /run [build_name]');
+        if (message.handlePartialCommand &&
+            message.handlePartialCommand(credentials) === false
+        ) {
+            message.answer('Usage: /run _job name_', {parse_mode: 'Markdown'});
+        }
         return;
     }
 
