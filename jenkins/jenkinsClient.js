@@ -28,7 +28,12 @@ function callApi(credentials, path, params, callback) {
             } else {
                 callback(null, 'Error calling jenkins api: ' + JSON.stringify(data));
             }
-        })
+        }).on('error', function (e) {
+
+        console.log(e);
+        callback(null, e);
+
+    });
 }
 
 function checkCredentials(credentials, callback) {
@@ -55,7 +60,7 @@ function runJob(credentials, jobName, callback) {
     });
 }
 
-function getJobsList(credentials, view, callback){
+function getJobsList(credentials, view, callback) {
     var pathPrefix = '';
     if (view && view.length > 0) {
         pathPrefix = '/view/' + view;
@@ -71,8 +76,6 @@ function getJobsList(credentials, view, callback){
         }
     });
 }
-
-
 
 
 function buildAuthHeader(credentials) {
