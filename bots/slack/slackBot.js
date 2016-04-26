@@ -22,27 +22,32 @@ SlackBot.prototype.subscribe = function () {
 
 SlackBot.prototype.start = function (onStart) {
     if (!this.settings.token) {
-        onStart(util.format(`Error: token for bot %s is not specified`, this.settings.name));
+        onStart(util.format('Error: token for bot %s is not specified', this.settings.name));
     }
     this.on('start', _onStart);
     console.log('Slack bot has been started');
 };
 
-function _onStart() {
+// Not implemented yet.
+SlackBot.prototype.sendMessage = function (chatId, text, options) {
 
-    console.log('Slack bot has been started');
+};
+
+function _onStart() {
+    //this.postTo('general', 'Hi everybody');
+    console.log('Slack bot has been started in _ONSTART');
 }
 
 function _onMessage() {
     if (message.subtype !== 'bot_message') {
         if (_isChannelConversation(message)) {
             var channel = _getChannelById(message.channel);
-            bot.postTo(channel.name, util.format('your message length is %s symbols', message.text.length));
+            this.postTo(channel.name, util.format('Your message length is %s symbols', message.text.length));
             return;
         }
         if (_isChatMessage(message)) {
             var user = _getUserById(message.user);
-            bot.postTo(user.name, util.format('your message length is %s symbols', message.text.length));
+            this.postTo(user.name, util.format('Your message length is %s symbols', message.text.length));
         }
     }
 }
@@ -57,13 +62,13 @@ function _isChannelConversation(message) {
 }
 
 function _getChannelById(channelId) {
-    return bot.channels.filter(function (item) {
+    return this.channels.filter(function (item) {
         return item.id === channelId;
     })[0];
 }
 
 function _getUserById(userId) {
-    return bot.users.filter(function (item) {
+    return this.users.filter(function (item) {
         return item.id === userId;
     })[0];
 }

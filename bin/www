@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-//'use strict';
 var debug = require('debug')('ci_bot:server');
 var MongoClient = require('mongodb').MongoClient;
 var botServer = require('../bots/botApp');
@@ -8,12 +7,13 @@ var subscriptionsManager = require('../jenkins/subscriptions/subscriptionsManage
 
 // Connection URL
 var url = 'mongodb://' + process.env.MONGO_USER + ':' + process.env.MONGO_PASS + '@ds013330.mlab.com:13330/ci_bot';
+
 // Use connect method to connect to the Server
 console.log('Connecting to MongoDB...');
 MongoClient.connect(url, function (err, db) {
     if (err) {
         console.log('Error connecting to mongo db.' + err);
-        //return;
+        return;
     }
 
     initializeStores(db);

@@ -83,7 +83,6 @@ var BotServer = function (bots) {
         }
     };
 
-
     //private
     this.renderMessage = function (message, options, callback) {
         fs.readFile(message.template, 'utf8', function (err, data) {
