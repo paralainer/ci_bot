@@ -7,6 +7,7 @@ var subscriptionsManager = require('../jenkins/subscriptions/subscriptionsManage
 
 // Connection URL
 var url = 'mongodb://' + process.env.MONGO_USER + ':' + process.env.MONGO_PASS + '@ds013330.mlab.com:13330/ci_bot';
+
 // Use connect method to connect to the Server
 console.log('Connecting to MongoDB...');
 MongoClient.connect(url, function (err, db) {
@@ -22,8 +23,8 @@ MongoClient.connect(url, function (err, db) {
 });
 
 function startSubscriptions(botServer) {
-    subscriptionsManager.start(botServer, function(){
-       console.log('All subscriptions started');
+    subscriptionsManager.start(botServer, function () {
+        console.log('All subscriptions started');
     });
 }
 

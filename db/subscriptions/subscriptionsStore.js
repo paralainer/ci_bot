@@ -4,7 +4,6 @@ var SubscriptionsStore = function (db) {
     this.db = db;
     this.collection = db.collection(collectionName);
 
-
     this.findOne = function (credentials, resultCallback) {
         this.collection.find(this.getCredentialsFilter(credentials)).limit(1).next((err, subscription) => {
             resultCallback(subscription);

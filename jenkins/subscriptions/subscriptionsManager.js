@@ -177,8 +177,7 @@ var SubscriptionsManager = function () {
             }
         }, this);
     };
-
-
+    
     //private
     this.getKey = function (credentials) {
         return `${credentials.url}:${credentials.username}:${credentials.token}`;

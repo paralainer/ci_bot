@@ -53,7 +53,6 @@ var BotServer = function (bots) {
         } else {
             console.log(`Can't send message to bot ${botName}, bot not found`);
         }
-
     };
 
     //private
@@ -83,7 +82,6 @@ var BotServer = function (bots) {
             this.renderMessage(messageText, options, callback);
         }
     };
-
 
     //private
     this.renderMessage = function (message, options, callback) {
