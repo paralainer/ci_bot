@@ -1,4 +1,4 @@
-var usersStoreInit = require('./users/userStore').init;
+var usersStoreInit = require('./users/usersStore').init;
 var subscriptionsStoreInit = require('./subscriptions/subscriptionsStore').init;
 
 var registry = {

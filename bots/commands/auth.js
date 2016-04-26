@@ -1,5 +1,5 @@
 var jenkinsClient = require('../../jenkins/jenkinsClient');
-var getUserStore = require('../../db/users/userStore').get;
+var getUserStore = require('../../db/users/usersStore').get;
 
 module.exports = function(message){
     var parts = message.params.split(' ');

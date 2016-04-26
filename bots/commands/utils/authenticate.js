@@ -1,4 +1,4 @@
-var store = require('../../../db/users/userStore').get;
+var store = require('../../../db/users/usersStore').get;
 
 module.exports = function (command, message) {
     store().find(message.bot.getName(), message.chatId, function (credentials) {
