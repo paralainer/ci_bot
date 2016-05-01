@@ -1,5 +1,4 @@
 var subscriptionsManager = require('../../jenkins/subscriptions/subscriptionsManager');
-var getSubscriptionId = require('./utils/subscriptionUtils').getSubscriptionId;
 
 module.exports = function (message, credentials) {
     subscriptionsManager.unsubscribe(credentials, {

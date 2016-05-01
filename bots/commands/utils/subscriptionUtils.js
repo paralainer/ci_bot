@@ -1,1 +1,0 @@
-module.exports.getSubscriptionId = (message) => `${message.bot.getName()}_${message.chatId}`;
