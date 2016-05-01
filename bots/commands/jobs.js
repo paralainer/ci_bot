@@ -3,8 +3,8 @@ var jenkinsClient = require('../../jenkins/jenkinsClient');
 module.exports = function (message, credentials) {
     jenkinsClient.getJobsList(credentials, message.params, function (jobs, err) {
         var viewText = '';
-        if (view) {
-            viewText = ' for view \'' + view + '\'';
+        if (message.params) {
+            viewText = ' for view \'' + message.params + '\'';
         }
         if (err) {
             console.log(err);
