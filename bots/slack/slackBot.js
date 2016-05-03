@@ -16,61 +16,59 @@ SlackBot.prototype.getName = function () {
 };
 
 SlackBot.prototype.subscribe = function () {
-    this.on('message', _onMessage);
-    console.log('Slack bot has been subscribed');
+    this.on('message',this._onMessage);
 };
 
 SlackBot.prototype.start = function (onStart) {
     if (!this.settings.token) {
         onStart(util.format('Error: token for bot %s is not specified', this.settings.name));
     }
-    this.on('start', _onStart);
-    console.log('Slack bot has been started');
+    this.on('start', this._onStart);
 };
 
 // Not implemented yet.
 SlackBot.prototype.sendMessage = function (chatId, text, options) {
-
+console.log('send msg');
 };
 
-function _onStart() {
-    //this.postTo('general', 'Hi everybody');
+SlackBot.prototype._onStart = function () {
+    this.postTo('general', 'Hi everybody');
     console.log('Slack bot has been started in _ONSTART');
 }
 
-function _onMessage() {
+SlackBot.prototype._onMessage = function(message){
     if (message.subtype !== 'bot_message') {
-        if (_isChannelConversation(message)) {
-            var channel = _getChannelById(message.channel);
+        if (this._isChannelConversation(message)) {
+            var channel = this._getChannelById(this, message.channel);
             this.postTo(channel.name, util.format('Your message length is %s symbols', message.text.length));
             return;
         }
-        if (_isChatMessage(message)) {
-            var user = _getUserById(message.user);
+        if (this._isChatMessage(message)) {
+            var user = this._getUserById(this, message.user);
             this.postTo(user.name, util.format('Your message length is %s symbols', message.text.length));
         }
     }
-}
+};
 
-function _isChatMessage(message) {
+SlackBot.prototype._isChatMessage = function (message) {
     return message.type === 'message' && Boolean(message.text);
-}
+};
 
-function _isChannelConversation(message) {
+SlackBot.prototype._isChannelConversation = function(message) {
     return typeof message.channel === 'string' &&
         message.channel[0] === 'C';
-}
+};
 
-function _getChannelById(channelId) {
-    return this.channels.filter(function (item) {
+SlackBot.prototype._getChannelById = function (self, channelId) {
+    return self.channels.filter(function (item) {
         return item.id === channelId;
     })[0];
-}
+};
 
-function _getUserById(userId) {
-    return this.users.filter(function (item) {
+SlackBot.prototype._getUserById = function(self, userId) {
+    return self.users.filter(function (item) {
         return item.id === userId;
     })[0];
-}
+};
 
 module.exports = SlackBot;
